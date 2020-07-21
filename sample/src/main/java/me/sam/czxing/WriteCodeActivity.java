@@ -13,7 +13,13 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import me.devilsen.czxing.code.BarcodeFormat;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import me.devilsen.czxing.code.BarcodeReader;
 import me.devilsen.czxing.code.BarcodeWriter;
 import me.devilsen.czxing.code.CodeResult;
@@ -101,21 +107,21 @@ public class WriteCodeActivity extends AppCompatActivity implements View.OnClick
         int id = v.getId();
         switch (id) {
             case R.id.image_view_qr_code_1:
-                read(getBitmap(qrcodeImage));
+                readRxJava(getBitmap(qrcodeImage));
                 break;
             case R.id.image_view_qr_code_2:
-                read(getBitmap(qrcodeLogoImage));
+                readRxJava(getBitmap(qrcodeLogoImage));
                 break;
             case R.id.image_view_bar_code_1:
-                read(getBitmap(barcodeImage));
+                readRxJava(getBitmap(barcodeImage));
                 break;
             case R.id.image_view_bar_code_2:
-                read(getBitmap(barcodeColorImage));
+                readRxJava(getBitmap(barcodeColorImage));
                 break;
         }
     }
 
-    private Bitmap getBitmap(ImageView imageView){
+    private Bitmap getBitmap(ImageView imageView) {
         BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
         return drawable.getBitmap();
     }
@@ -126,5 +132,43 @@ public class WriteCodeActivity extends AppCompatActivity implements View.OnClick
             Log.d("read code", result.getText() + " format " + result.getFormat());
             Toast.makeText(this, result.getText(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void readRxJava(final Bitmap bitmap) {
+        Observable
+                .create(new ObservableOnSubscribe<CodeResult>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<CodeResult> emitter) throws Exception {
+                        CodeResult result = reader.read(bitmap);
+                        if (result != null) {
+                            emitter.onNext(result);
+                        }
+                        emitter.onComplete();
+                    }
+                })
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<CodeResult>() {
+                    @Override
+                    public void onSubscribe(Disposable disposable) {
+
+                    }
+
+                    @Override
+                    public void onNext(CodeResult result) {
+                        Log.d("read code", result.getText() + " format " + result.getFormat());
+                        Toast.makeText(WriteCodeActivity.this, result.getText(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
     }
 }

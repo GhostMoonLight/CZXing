@@ -271,6 +271,23 @@ void ImageScheduler::decodeAdaptivePixels(const Mat &gray) {
         LOGE("ZXing Adaptive Success, scanIndex = %d", scanIndex);
         javaCallHelper->onResult(result, SCAN_TYPE_ADAPTIVE);
     } else {
+        decodeNegative(gray);
+    }
+}
+
+/**
+ * 2.3 处理反色图片
+ * @param gray
+ */
+void ImageScheduler::decodeNegative(const Mat &gray) {
+    Mat negativeMat;
+    bitwise_not(gray, negativeMat);
+
+    Result result = decodePixels(negativeMat);
+    if (result.isValid()) {
+        LOGE("ZXing Negative Success, scanIndex = %d", scanIndex);
+        javaCallHelper->onResult(result, SCAN_TYPE_ADAPTIVE);
+    } else {
         recognizerQrCode(gray);
     }
 }
@@ -361,16 +378,21 @@ void ImageScheduler::isDecodeQrCode(bool decodeQrCode) {
     this->decodeQr = decodeQrCode;
 }
 
-Result ImageScheduler::readBitmap(jobject bitmap, int left, int top, int width, int height) {
+Result
+ImageScheduler::readBitmap(JNIEnv *env, jobject bitmap, int left, int top, int width, int height) {
 
     Mat src;
     BitmapToMat(env, bitmap, src);
 
     Mat gray;
-    cvtColor(src, gray, COLOR_RGB2GRAY);
+    cvtColor(src, gray, COLOR_RGBA2GRAY);
 
+    auto gWidth = static_cast<unsigned int>(gray.cols);
+    auto gHeight = static_cast<unsigned int>(gray.rows);
     const void *raw = gray.data;
-    Image image(gray.cols, gray.rows, "Y800", raw, gray.cols * gray.rows);
+    Image image(gWidth, gHeight, "Y800", raw, gWidth * gHeight);
+    LOGE("zbar Code cols = %d row = %d", gray.cols, gray.rows);
+
     ImageScanner zbarScanner;
     zbarScanner.set_config(ZBAR_QRCODE, ZBAR_CFG_ENABLE, 1);
     if (zbarScanner.scan(image) > 0) {
@@ -381,6 +403,7 @@ Result ImageScheduler::readBitmap(jobject bitmap, int left, int top, int width, 
             resultBar.setFormat(BarcodeFormat::QR_CODE);
             resultBar.setText(ANSIToUnicode(symbol->get_data()));
             image.set_data(nullptr, 0);
+            LOGE("zbar decode success");
             return resultBar;
         }
     } else {
@@ -392,9 +415,7 @@ Result ImageScheduler::readBitmap(jobject bitmap, int left, int top, int width, 
         LOGE("create binary bitmap fail");
         return Result(DecodeStatus::NotFound);
     }
+    LOGE("zxing decode success");
 
     return reader->read(*binImage);
 }
-
-
-

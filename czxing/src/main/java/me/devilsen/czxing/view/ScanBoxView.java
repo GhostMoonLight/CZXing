@@ -400,10 +400,10 @@ public class ScanBoxView extends View {
             return;
         }
         if (mLightOff == null) {
-            mLightOff = BitmapUtil.getBitmap(getContext(), R.drawable.ic_highlight_black_close_24dp);
+            mLightOff = BitmapUtil.getBitmap(getContext(), R.drawable.ic_highlight_close_24dp);
         }
         if (mLightOn == null) {
-            mLightOn = BitmapUtil.getBitmap(getContext(), R.drawable.ic_highlight_black_open_24dp);
+            mLightOn = BitmapUtil.getBitmap(getContext(), R.drawable.ic_highlight_open_24dp);
         }
         if (mFlashLightLeft == 0 && mLightOff != null) {
             mFlashLightLeft = mFramingRect.left + ((mFramingRect.width() - mLightOff.getWidth()) >> 1);
@@ -460,10 +460,11 @@ public class ScanBoxView extends View {
                 public void onAnimationUpdate(ValueAnimator animation) {
                     mScanLinePosition = (float) animation.getAnimatedValue();
                     // 这里如果用postInvalidate会导致所在Activity的onStop和onDestroy方法阻塞，感谢lhhseraph的反馈
-                    postInvalidateOnAnimation(mBoxLeft,
-                            ((int) (mBoxTop + mScanLinePosition - 10)),
-                            mBoxLeft + mBoxWidth,
-                            ((int) (mBoxTop + mScanLinePosition + SCAN_LINE_HEIGHT + 10)));
+                    postInvalidateOnAnimation();
+//                    postInvalidateOnAnimation(mBoxLeft,
+//                            ((int) (mBoxTop + mScanLinePosition - 10)),
+//                            mBoxLeft + mBoxWidth,
+//                            ((int) (mBoxTop + mScanLinePosition + SCAN_LINE_HEIGHT + 10)));
                 }
             });
         } else {
@@ -472,10 +473,11 @@ public class ScanBoxView extends View {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     mScanLinePosition = (float) animation.getAnimatedValue();
-                    postInvalidateOnAnimation((int) (mBoxLeft + mScanLinePosition - 10),
-                            mBoxTop,
-                            (int) (mBoxLeft + mScanLinePosition + SCAN_LINE_HEIGHT + 10),
-                            mBoxTop + mBoxHeight);
+                    postInvalidateOnAnimation();
+//                    postInvalidateOnAnimation((int) (mBoxLeft + mScanLinePosition - 10),
+//                            mBoxTop,
+//                            (int) (mBoxLeft + mScanLinePosition + SCAN_LINE_HEIGHT + 10),
+//                            mBoxTop + mBoxHeight);
                 }
             });
         }
@@ -498,6 +500,14 @@ public class ScanBoxView extends View {
      */
     public int getScanBoxSizeExpand() {
         return mBoxSize + mBoxSizeOffset;
+    }
+
+    public int getScanBoxWidthExpand() {
+        return mBoxWidth + mBoxSizeOffset;
+    }
+
+    public int getScanBoxHeightExpand() {
+        return mBoxHeight + mBoxSizeOffset;
     }
 
     /**
@@ -601,6 +611,9 @@ public class ScanBoxView extends View {
      * @param color 透明颜色
      */
     public void setMaskColor(int color) {
+        if (color == 0) {
+            return;
+        }
         mMaskColor = color;
     }
 
@@ -625,6 +638,9 @@ public class ScanBoxView extends View {
      * 设置手电筒打开时的图标
      */
     public void setFlashLightOnDrawable(int lightOnDrawable) {
+        if (lightOnDrawable == 0) {
+            return;
+        }
         mLightOn = BitmapUtil.getBitmap(getContext(), lightOnDrawable);
     }
 
@@ -632,6 +648,9 @@ public class ScanBoxView extends View {
      * 设置手电筒关闭时的图标
      */
     public void setFlashLightOffDrawable(int lightOffDrawable) {
+        if (lightOffDrawable == 0) {
+            return;
+        }
         mLightOff = BitmapUtil.getBitmap(getContext(), lightOffDrawable);
     }
 
